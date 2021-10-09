@@ -2,7 +2,7 @@
 title: "P8105_HomeWork2_qc2307"
 author: "Qixiang Chen"
 date: "10/9/2021"
-output: html_document
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -34,7 +34,7 @@ Write a paragraph about these data; you are encouraged to use inline R. Be sure 
 
 ```{r}
 wheel_data_raw = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 1)
-wheel_clean_name = janitor::clean_names(wheel_df)
+wheel_clean_name = janitor::clean_names(wheel_data_raw)
 wheel_data_selected = drop_na(wheel_clean_name, dumpster)
 wheel_data_rounded = mutate(wheel_data_selected, sports_balls = round(sports_balls))
 wheel_data_raw_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 7, range =  "A2:B14")
@@ -48,11 +48,13 @@ wheel_2018 = mutate(
   year = 2018,
   month = month.name[month],
 )
+wheel_2018 = relocate(wheel_2018, year)
 wheel_2019 = mutate(
   wheel_2019_dropNA,
   year = 2019,
   month = month.name[month],
 )
+wheel_2019 = relocate(wheel_2019, year)
 wheel_2018
 wheel_2019
 combined_2018_2019 = rbind(wheel_2018, wheel_2019)
