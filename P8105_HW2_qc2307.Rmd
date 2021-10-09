@@ -37,35 +37,43 @@ wheel_data_raw = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx"
 wheel_clean_name = janitor::clean_names(wheel_data_raw)
 wheel_data_selected = drop_na(wheel_clean_name, dumpster)
 wheel_data_rounded = mutate(wheel_data_selected, sports_balls = round(sports_balls))
-wheel_data_raw_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 7, range =  "A2:B14")
-wheel_data_raw_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 6, range = "A2:B14")
-wheel_clean_name_2018 = janitor::clean_names(wheel_data_raw_2018)
-wheel_clean_name_2019 = janitor::clean_names(wheel_data_raw_2019)
-wheel_2018_dropNA = drop_na(wheel_clean_name_2018, total)
-wheel_2019_dropNA = drop_na(wheel_clean_name_2019, total)
-wheel_2018 = mutate(
-  wheel_2018_dropNA,
+wheel_data_rounded
+wheel_clean_row = nrow(wheel_data_rounded)
+wheel_clean_row
+wheel_clean_col = ncol(wheel_data_rounded)
+wheel_clean_col
+precipitation_data_raw_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 7, range =  "A2:B14")
+precipitation_data_raw_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 6, range = "A2:B14")
+precipitation_clean_name_2018 = janitor::clean_names(precipitation_data_raw_2018)
+precipitation_clean_name_2019 = janitor::clean_names(precipitation_data_raw_2019)
+precipitation_2018_dropNA = drop_na(precipitation_clean_name_2018, total)
+precipitation_2019_dropNA = drop_na(precipitation_clean_name_2019, total)
+precipitation_2018 = mutate(
+  precipitation_2018_dropNA,
   year = 2018,
   month = month.name[month],
 )
-wheel_2018 = relocate(wheel_2018, year)
-wheel_2019 = mutate(
-  wheel_2019_dropNA,
+precipitation_2018 = relocate(precipitation_2018, year)
+precipitation_2019 = mutate(
+  precipitation_2019_dropNA,
   year = 2019,
   month = month.name[month],
 )
-wheel_2019 = relocate(wheel_2019, year)
-wheel_2018
-wheel_2019
-combined_2018_2019 = rbind(wheel_2018, wheel_2019)
+precipitation_2019 = relocate(precipitation_2019, year)
+precipitation_2018
+precipitation_2019
+combined_2018_2019 = rbind(precipitation_2018, precipitation_2019)
 combined_2018_2019_relocated = relocate(combined_2018_2019, year)
 combined_2018_2019_relocated
+combined_2018_2019_row = nrow(combined_2018_2019_relocated)
+combined_2018_2019_col = ncol(combined_2018_2019_relocated)
 ```
 
-(write a short paragraph about this dataset)
-In the dataset `combined_2018_2019_relocated`, there are three columns including year, month, and total.
-
-
+(write a short paragraph about this dataset): 
+The dataset `wheel_data_rounded` is generated after doing data clean and rounding `sports_balls` variable.
+In the dataset wheel_data_rounded, there are `r wheel_clean_row` rows and `r wheel_clean_col` columns. 
+The precipitation dataset `combined_2018_2019_relocated` is generated through combining the precipitation data sheet of 2018 and the precipitation data sheet of 2019. In the dataset, there are `r combined_2018_2019_row` rows and `r combined_2018_2019_col` columns. The total precipitation in 2018 is
+`r sum(precipitation_2018$total)`. The median precipitation in 2019 is `r median(precipitation_2019$total)`.
 
 
 ## Question 2
@@ -155,13 +163,12 @@ unemployment_df
 ```{r}
 #Merging
 result1 = left_join(pols_month_df, snp_data_df)
-final_result = left_join(result1, unemployment_df)
-final_result
+pols_snp_unemployment = left_join(result1, unemployment_df)
+pols_snp_unemployment
 ```
 
-(write a short paragraph about this dataset)
-
-
+(write a short paragraph about this dataset): 
+After reading in and cleaning the data, for the dataset `pols_month_df`, there are `r nrow(pols_month_df)` rows and `r ncol(pols_month_df)` columns. The data from year `r min(pols_month_df$year)` to year `r max(pols_month_df$year)` are included. The key variables include `precident`, `gov_gop`, `gov_dem`, `sen_gop`, `sen_dem`, `rep_gop`, and `rep_dem`. For the `snp_data_df` dataset, there are `r nrow(snp_data_df)` rows and `r ncol(snp_data_df)` columns. The data from year `r min(snp_data_df$year)` to year `r max(snp_data_df$year)` are included. Further, the key variable include `close`. For the `unemployment_df` dataset, there are `r nrow(unemployment_df)` rows and `r ncol(unemployment_df)` columns. The data from year `r min(unemployment_df$year)` to year `r max(unemployment_df$year)` are included. The key variable is `unemployment_rate`. Then, after combining the datasets, `pols_snp_unemployment` dataset is generated. there are `r nrow(pols_snp_unemployment)` rows and `r ncol(pols_snp_unemployment)` columns. The data from year `r min(pols_snp_unemployment$year)` to year `r max(pols_snp_unemployment$year)` are included. The key variables include `precident`, `gov_gop`, `gov_dem`, `sen_gop`, `sen_dem`, `rep_gop`, `rep_dem`, `close`, and `unemployment_rate`.
 
 
 ## Qestion 3
@@ -191,14 +198,12 @@ baby_name_df
 # Step_2:Produce a well-structured, reader-friendly table containing rows for ethnicities and columns for year, and showing the rank in popularity of the name “Olivia” as a female baby name over time;
 baby_female_name = 
   baby_name_df %>%
-  filter(gender == "FEMALE") %>%
+  filter(gender == "FEMALE", childs_first_name == "Olivia") %>%
   pivot_wider(
-    names_from = ethnicity,
-    values_from = rank,
+    names_from = "year_of_birth",
+    values_from = "rank",
   ) %>%
-  select(-gender) %>%
-  filter(childs_first_name == "Olivia") %>%
-  arrange(year_of_birth)
+  select(-gender) 
 baby_female_name
 ```
 
@@ -206,14 +211,12 @@ baby_female_name
 # Step_3:Similar table as above for male baby;
 baby_male_name = 
   baby_name_df %>%
-  filter(gender == "MALE") %>%
+  filter(gender == "MALE", rank == 1) %>%
   pivot_wider(
-    names_from = ethnicity,
-    values_from = rank,
+    names_from = "year_of_birth",
+    values_from = "rank",
   ) %>%
-  select(-gender) %>%
-  filter(childs_first_name == "Ethan") %>%
-  arrange(year_of_birth)
+  select(-gender)
 baby_male_name
 ```
 
@@ -222,7 +225,7 @@ baby_male_name
 baby_male_name_2016 = 
   baby_name_df %>%
   filter(year_of_birth == 2016, ethnicity == "WHITE NON HISPANIC", gender == "MALE") %>%
-  ggplot(aes(x = count, y = rank, color = rank)) + geom_point()
+  ggplot(aes(x = rank, y = count)) + geom_point()
 baby_male_name_2016
 ```
 
