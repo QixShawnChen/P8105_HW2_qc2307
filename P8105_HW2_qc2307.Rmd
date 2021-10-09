@@ -37,10 +37,11 @@ wheel_data_raw = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx"
 wheel_clean_name = janitor::clean_names(wheel_data_raw)
 wheel_data_selected = drop_na(wheel_clean_name, dumpster)
 wheel_data_rounded = mutate(wheel_data_selected, sports_balls = round(sports_balls))
-wheel_data_rounded
-wheel_clean_row = nrow(wheel_data_rounded)
+wheel_data_cleaned = drop_na(wheel_data_rounded, date)
+wheel_data_cleaned
+wheel_clean_row = nrow(wheel_data_cleaned)
 wheel_clean_row
-wheel_clean_col = ncol(wheel_data_rounded)
+wheel_clean_col = ncol(wheel_data_cleaned)
 wheel_clean_col
 precipitation_data_raw_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 7, range =  "A2:B14")
 precipitation_data_raw_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 6, range = "A2:B14")
@@ -70,10 +71,10 @@ combined_2018_2019_col = ncol(combined_2018_2019_relocated)
 ```
 
 (write a short paragraph about this dataset): 
-The dataset `wheel_data_rounded` is generated after doing data clean and rounding `sports_balls` variable.
+The dataset `wheel_data_cleaned` is generated after doing data clean and rounding `sports_balls` variable.
 In the dataset wheel_data_rounded, there are `r wheel_clean_row` rows and `r wheel_clean_col` columns. 
 The precipitation dataset `combined_2018_2019_relocated` is generated through combining the precipitation data sheet of 2018 and the precipitation data sheet of 2019. In the dataset, there are `r combined_2018_2019_row` rows and `r combined_2018_2019_col` columns. The total precipitation in 2018 is
-`r sum(precipitation_2018$total)`. The median precipitation in 2019 is `r median(precipitation_2019$total)`.
+`r sum(precipitation_2018$total)`. The median precipitation in 2019 is `r median(wheel_data_rounded$sports_balls)`.
 
 
 ## Question 2
