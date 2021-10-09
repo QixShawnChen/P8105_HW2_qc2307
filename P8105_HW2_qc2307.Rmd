@@ -1,0 +1,226 @@
+---
+title: "P8105_HomeWork2_qc2307"
+author: "Qixiang Chen"
+date: "10/9/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%")
+```
+
+```{r}
+library(tidyverse)
+library(readxl)
+```
+
+
+## Question 1
+This problem uses the Mr. Trash Wheel dataset, available as an Excel file on the course website.
+
+Read and clean the Mr. Trash Wheel sheet:
+
+specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel
+use reasonable variable names
+omit rows that do not include dumpster-specific data
+round the number of sports balls to the nearest integer
+Read and clean precipitation data for 2018 and 2019. For each, omit rows without precipitation data and add a variable for year. Next, combine precipitation datasets and convert month to a character variable (the variable month.name is built into R and should be useful).
+
+Write a paragraph about these data; you are encouraged to use inline R. Be sure to note the number of observations in both resulting datasets, and give examples of key variables. For available data, what was the total precipitation in 2018? What was the median number of sports balls in a dumpster in 2019?
+
+```{r}
+wheel_data_raw = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 1)
+wheel_clean_name = janitor::clean_names(wheel_df)
+wheel_data_selected = drop_na(wheel_clean_name, dumpster)
+wheel_data_rounded = mutate(wheel_data_selected, sports_balls = round(sports_balls))
+wheel_data_raw_2018 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 7, range =  "A2:B14")
+wheel_data_raw_2019 = read_excel("./data/Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet = 6, range = "A2:B14")
+wheel_clean_name_2018 = janitor::clean_names(wheel_data_raw_2018)
+wheel_clean_name_2019 = janitor::clean_names(wheel_data_raw_2019)
+wheel_2018_dropNA = drop_na(wheel_clean_name_2018, total)
+wheel_2019_dropNA = drop_na(wheel_clean_name_2019, total)
+wheel_2018 = mutate(
+  wheel_2018_dropNA,
+  year = 2018,
+  month = month.name[month],
+)
+wheel_2019 = mutate(
+  wheel_2019_dropNA,
+  year = 2019,
+  month = month.name[month],
+)
+wheel_2018
+wheel_2019
+combined_2018_2019 = rbind(wheel_2018, wheel_2019)
+combined_2018_2019_relocated = relocate(combined_2018_2019, year)
+combined_2018_2019_relocated
+```
+
+(write a short paragraph about this dataset)
+In the dataset `combined_2018_2019_relocated`, there are three columns including year, month, and total.
+
+
+
+
+## Question 2
+This problem uses the FiveThirtyEight data; these data were gathered to create the interactive graphic on this page. In particular, we’ll use the data in pols-month.csv, unemployment.csv, and snp.csv. Our goal is to merge these into a single data frame using year and month as keys across datasets.
+
+First, clean the data in pols-month.csv. Use separate() to break up the variable mon into integer variables year, month, and day; replace month number with month name; create a president variable taking values gop and dem, and remove prez_dem and prez_gop; and remove the day variable.
+
+Second, clean the data in snp.csv using a similar process to the above. For consistency across datasets, arrange according to year and month, and organize so that year and month are the leading columns.
+
+Third, tidy the unemployment data so that it can be merged with the previous datasets. This process will involve switching from “wide” to “long” format; ensuring that key variables have the same name; and ensuring that key variables take the same values.
+
+Join the datasets by merging snp into pols, and merging unemployment into the result.
+
+Write a short paragraph about these datasets. Explain briefly what each dataset contained, and describe the resulting dataset (e.g. give the dimension, range of years, and names of key variables).
+
+Note: we could have used a date variable as a key instead of creating year and month keys; doing so would help with some kinds of plotting, and be a more accurate representation of the data. Date formats are tricky, though. For more information check out the lubridate package in the tidyverse.
+
+```{r}
+#First
+pols_month_df =
+  read_csv("./data/fivethirtyeight_datasets/pols-month.csv") %>%
+  janitor::clean_names() %>%
+  separate(mon, into = c("year", "month_day_2"), sep =  4) %>%
+  separate(month_day_2, into = c("first_underscore", "month_day_1"), sep = 1) %>%
+  separate(month_day_1, into = c("month", "day_1"), sep = 2) %>%
+  separate(day_1, into = c("second_underscore", "day"), sep = 1) %>%
+  select(-first_underscore) %>%
+  select(-second_underscore) %>%
+  mutate(
+    year = as.numeric(year),
+    month = month.name[as.numeric(month)],
+    president = prez_gop - prez_dem,
+    president = recode_factor(president, `1` = "gop", `2` = "gop", `-1` = "dem"),
+  ) %>%
+  select(-prez_gop) %>%
+  select(-prez_dem) %>%
+  relocate(year, month, president) %>%
+  select(-day)
+pols_month_df
+```
+
+```{r}
+#Second
+snp_data_df = 
+  read_csv("./data/fivethirtyeight_datasets/snp.csv") %>%
+  janitor::clean_names() %>%
+  separate(date, into = c("month", "day", "year"), sep = "/") %>%
+  mutate(
+    month = month.name[as.numeric(month)],
+    day = as.numeric(day),
+    year = as.numeric(year),
+    year = case_when(year > 20 ~ year + 1900,
+                     year <= 20 ~ year +2000),
+  ) %>%
+  relocate(year, month, day) %>%
+  select(-day)
+snp_data_df  
+```
+
+```{r}
+#Third
+unemployment_df = 
+  read_csv("./data/fivethirtyeight_datasets/unemployment.csv") %>%
+  janitor::clean_names() %>%
+  pivot_longer(
+    jan:dec,
+    names_to = "month",
+    values_to = "unemployment_rate",
+  ) %>%
+    mutate(month = recode(month, 
+                          "jan" = "January",
+                          "feb" = "February",
+                          "mar" = "March",
+                          "apr" = "April",
+                          "may" = "May",
+                          "jun" = "June",
+                          "jul" = "July",
+                          "aug" = "August",
+                          "sep" = "September",
+                          "oct" = "October",
+                          "nov" = "November",
+                          "dec" = "December"
+                          ))
+unemployment_df  
+```
+
+```{r}
+#Merging
+result1 = left_join(pols_month_df, snp_data_df)
+final_result = left_join(result1, unemployment_df)
+final_result
+```
+
+(write a short paragraph about this dataset)
+
+
+
+
+## Qestion 3
+This problem uses data from NYC Open data on the popularity of baby names, and can be downloaded here.
+
+Load and tidy the data. Note that, although these data may seem fairly well formatted initially, the names of a categorical predictor and the case structure of string variables changed over time; you’ll need to address this in your data cleaning. Also, some rows seem duplicated, and these will need to be removed (hint: google something like “dplyr remove duplicate rows” to get started).
+
+Produce a well-structured, reader-friendly table showing the rank in popularity of the name “Olivia” as a female baby name over time; this should have rows for ethnicities and columns for year. Produce a similar table showing the most popular name among male children over time.
+
+Finally, for male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis).
+
+```{r}
+# Step_1:clean data;
+baby_name_df = 
+  read_csv("./data/Popular_Baby_Names.csv") %>%
+  janitor::clean_names() %>%
+  mutate(ethnicity = recode(ethnicity,
+                            "ASIAN AND PACI" = "ASIAN AND PACIFIC ISLANDER",
+                            "BLACK NON HISP" = "BLACK NON HISPANIC",
+                            "WHITE NON HISP" = "WHITE NON HISPANIC")) %>%
+  distinct() %>%
+  arrange(rank)
+baby_name_df
+```
+
+```{r}
+# Step_2:Produce a well-structured, reader-friendly table containing rows for ethnicities and columns for year, and showing the rank in popularity of the name “Olivia” as a female baby name over time;
+baby_female_name = 
+  baby_name_df %>%
+  filter(gender == "FEMALE") %>%
+  pivot_wider(
+    names_from = ethnicity,
+    values_from = rank,
+  ) %>%
+  select(-gender) %>%
+  filter(childs_first_name == "Olivia") %>%
+  arrange(year_of_birth)
+baby_female_name
+```
+
+```{r}
+# Step_3:Similar table as above for male baby;
+baby_male_name = 
+  baby_name_df %>%
+  filter(gender == "MALE") %>%
+  pivot_wider(
+    names_from = ethnicity,
+    values_from = rank,
+  ) %>%
+  select(-gender) %>%
+  filter(childs_first_name == "Ethan") %>%
+  arrange(year_of_birth)
+baby_male_name
+```
+
+```{r}
+# Step_4:For male, white non-hispanic children born in 2016, produce a scatter plot showing the number of children with a name (y axis) against the rank in popularity of that name (x axis);
+baby_male_name_2016 = 
+  baby_name_df %>%
+  filter(year_of_birth == 2016, ethnicity == "WHITE NON HISPANIC", gender == "MALE") %>%
+  ggplot(aes(x = count, y = rank, color = rank)) + geom_point()
+baby_male_name_2016
+```
+
