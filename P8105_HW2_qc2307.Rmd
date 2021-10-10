@@ -165,6 +165,8 @@ unemployment_df
 #Merging
 result1 = left_join(pols_month_df, snp_data_df)
 pols_snp_unemployment = left_join(result1, unemployment_df)
+pols_snp_unemployment = relocate(pols_snp_unemployment, year, month, president, close, unemployment_rate)
+pols_snp_unemployment = arrange(pols_snp_unemployment, desc(year))
 pols_snp_unemployment
 ```
 
